@@ -5,9 +5,13 @@
 #include <Eigen/Dense>
 #include <vector>
 #include <random>
+#include <complex>
+#include <cmath> 
+
 
 
 using namespace std;
+using namespace Eigen;
 
 
 
@@ -26,19 +30,19 @@ int main()
     cout << "temps de simulation" << endl;
     cin >> temps_arret;
 
-    vector<vector<double>> matrice_iter(N, vector<double>(N, 0.));
-    matrice_iter[0][1] = 1.;
-    matrice_iter[1][0] = lambda / (lambda + mu);
-    matrice_iter[1][2] = mu / (lambda + mu);
-    matrice_iter[2][1] = 2.0 * lambda / (2.0 * lambda + mu);
-    matrice_iter[2][3] = mu / (2.0 * lambda + mu);
+    // vector<vector<double>> matrice_iter(N, vector<double>(N, 0.));
+    // matrice_iter[0][1] = 1.;
+    // matrice_iter[1][0] = lambda / (lambda + mu);
+    // matrice_iter[1][2] = mu / (lambda + mu);
+    // matrice_iter[2][1] = 2.0 * lambda / (2.0 * lambda + mu);
+    // matrice_iter[2][3] = mu / (2.0 * lambda + mu);
     
-    for (int i(3); i < N - 1; ++i) {
-        matrice_iter[i][i - 1] = 3.0 * lambda / (3.0 * lambda + mu);
-        matrice_iter[i][i + 1] = mu / (3.0 * lambda + mu);
-    }
-    matrice_iter[N - 1][N - 2] = 3.0 * lambda / (3.0 * lambda + mu);
-    matrice_iter[N - 1][N - 1] = 1 - ( 3.0 * lambda / (3.0 * lambda + mu) );
+    // for (int i(3); i < N - 1; ++i) {
+    //     matrice_iter[i][i - 1] = 3.0 * lambda / (3.0 * lambda + mu);
+    //     matrice_iter[i][i + 1] = mu / (3.0 * lambda + mu);
+    // }
+    // matrice_iter[N - 1][N - 2] = 3.0 * lambda / (3.0 * lambda + mu);
+    // matrice_iter[N - 1][N - 1] = 1 - ( 3.0 * lambda / (3.0 * lambda + mu) );
 
     vector<vector<double>> matrice_continue(N, vector<double>(N, 0.));
     matrice_continue[0][0] = -mu;
@@ -55,8 +59,11 @@ int main()
         matrice_continue[i][i + 1] = mu;
         matrice_continue[i][i] = -3.0 * lambda - mu;
     }
+    matrice_continue[N-1][N-2] = 3.0*lambda;
+    matrice_continue[N-1][N-1] = -3.0*lambda;
+    
 
-    vector<double> temps(0.);
+    vector<double> temps_liste(0);
     vector<double> taille_liste(0);
     random_device rd;                     // Source d'entropie
     mt19937 gen(rd());                    // Générateur Mersenne Twister
@@ -106,11 +113,75 @@ int main()
             temps_local += delta_t;
         }
 
-        temps.push_back(temps_local);
+        temps_liste.push_back(temps_local);
         taille_liste.push_back(taille);
     }
 
+    Eigen::Matrix<std::complex<double>, Eigen::Dynamic, Eigen::Dynamic> mat(N, N);
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            mat(j, i) = std::complex<double>(matrice_continue[i][j], matrice_continue[i][j]); // transpose !
+        }
+    }
 
+    EigenSolver<MatrixXcd> solver(mat);
+    VectorXcd eigenvalues = solver.eigenvalues();
+    // MatrixXcd eigenvectors = solver.eigenvectors();
+
+    double max=eigenvalues[0].real();
+    int index_max=0;
+    for(int i=1; i<eigenvalues.size(); ++i){
+        if (eigenvalues[i].real() > max) {
+            max = eigenvalues[i].real();
+            index_max = i;
+        }
+    }
+
+    double max_2;
+    int index_max_2;
+    if (index_max == 0) {
+        max_2 = eigenvalues[1].real();
+        index_max_2 = 1;
+    }
+    else {
+        max_2 = eigenvalues[0].real();
+        index_max_2 = 0;
+    }
+    for(int i(0);i<eigenvalues.size();++i){
+        if (i==index_max) continue;
+        if (eigenvalues[i].real() > max_2) {
+            max_2 = eigenvalues[i].real();
+            index_max_2 = i;
+        }
+    }
+
+    cout << "GAP : exp(lambda) = " << exp(max_2) << endl;
+    cout << "sup(vp) = " << max << endl;
+
+    cout << "Proba stationnaire" << endl << endl;
+    VectorXcd eigenvector = solver.eigenvectors().col(index_max);
+    complex<double> somme=0.;
+    for (int i = 0; i < eigenvector.size(); ++i) 
+        somme += eigenvector[i];
+    for (int i = 0; i < eigenvector.size(); ++i) {
+        eigenvector[i] = eigenvector[i] / somme;
+        cout << eigenvector[i].real() << endl;
+    }
+
+    cout << "somme abs de la partie complexe : " ;
+    double somme_i=0.;
+    for(int i = 0; i < eigenvector.size(); ++i) {
+        somme_i += abs(eigenvector[i].imag());
+    }
+    cout << somme_i << endl;
+
+    cout << "Fin de proba stationnaire" << endl << endl;
+    cout << "Simulation. Affiché : (début du temps ; taille de la file à partir de ce moment)" << endl << endl;
+    for (int i = 0; i < temps_liste.size(); ++i) {
+        cout << temps_liste[i] << " ; " << taille_liste[i] << endl;
+    }
+
+    cout << "Fin de simulation" << endl << endl;
 
 }
 
