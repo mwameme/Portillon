@@ -118,11 +118,11 @@ int main()
     MatrixXcd mat(N, N);
     for (int i = 0; i < N; ++i) {
         for (int j = 0; j < N; ++j) {
-            mat(j, i) = std::complex<double>(matrice_continue[i][j], 0.); // transpose !
+            mat(j, i) = std::complex<double>(matrice_continue[i][j], 0.0); // transpose !
         }
     }
 
-    EigenSolver<MatrixXcd> solver(mat);
+    ComplexEigenSolver<MatrixXcd> solver(mat);
     VectorXcd eigenvalues = solver.eigenvalues();
 
     double max = eigenvalues[0].real();
