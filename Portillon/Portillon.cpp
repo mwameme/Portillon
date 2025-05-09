@@ -62,8 +62,8 @@ int main()
     matrice_continue[N - 1][N - 1] = -3.0 * lambda;
 
 
-    vector<double> temps_liste(0);
-    vector<double> taille_liste(0);
+    vector<double> temps_liste(1,0.);
+    vector<double> taille_liste(1,0);
     random_device rd;                     // Source d'entropie
     mt19937 gen(rd());                    // Générateur Mersenne Twister
     exponential_distribution<> dist_0(mu);
@@ -100,7 +100,7 @@ int main()
                 taille = 3;
             temps_local += delta_t;
         }
-        if (taille >= 3) {
+        else if (taille >= 3) {
             double delta_t = dist_3(gen);
             double p = 3.0 * lambda / (3.0 * lambda + mu);
             double x = uniform(gen);
@@ -174,12 +174,13 @@ int main()
     cout << somme_i << endl;
 
     cout << "Fin de proba stationnaire" << endl << endl;
-    cout << "Simulation. Affiché : (début du temps ; taille de la file à partir de ce moment)" << endl << endl;
+    cout << "Simulation. Affiche : (debut du temps ; taille de la file a partir de ce moment)" << endl << endl;
     for (int i = 0; i < temps_liste.size(); ++i) {
         cout << temps_liste[i] << " ; " << taille_liste[i] << endl;
     }
 
     cout << "Fin de simulation" << endl << endl;
-
+    string question;
+    cin >> question;
 }
 
